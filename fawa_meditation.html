@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAWA 선명상 — 이근원통의 현대적 구현</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --parchment: #f5f0e8;
+    
+    --gold: #b8862c;
+    --gold-light: #d4a845;
+    --lotus: #7c4d8a;
+    --lotus-light: #c9a6d9;
+    --jade: #2d6e5e;
+    --jade-light: #a8d4c8;
+    --rust: #9b3a2a;
+    --mist: #e8e2d8;
+    --deep: #0d0b06;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  /* ── BACK BAR ── */
+  .back-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 400;
+    background: rgba(6,5,2,0.97);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(184,134,44,0.35);
+    display: flex; align-items: center; gap: 0;
+    height: 48px; padding: 0 1.5rem;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 8px;
+    color: rgba(245,240,232,0.6);
+    font-size: 0.78rem; font-weight: 600;
+    text-decoration: none; letter-spacing: 0.08em;
+    transition: color 0.25s;
+    padding: 0 1rem 0 0;
+    border-right: 1px solid rgba(184,134,44,0.25);
+  }
+  .back-btn:hover { color: var(--gold-light); }
+  .back-bar-title {
+    flex: 1; text-align: center;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--gold); letter-spacing: 0.1em;
+  }
+  .back-bar-pair {
+    padding: 0 0 0 1rem;
+    border-left: 1px solid rgba(184,134,44,0.25);
+  }
+  .pair-link {
+    display: flex; align-items: center; gap: 5px;
+    color: rgba(245,240,232,0.5);
+    font-size: 0.72rem; font-weight: 600;
+    text-decoration: none; letter-spacing: 0.05em;
+    transition: color 0.25s; white-space: nowrap;
+  }
+  .pair-link:hover { color: var(--gold-light); }
+
+  body {
+    background: var(--deep);
+    color: var(--parchment);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem 4rem;
+    padding-top: 8rem;
+    background: radial-gradient(ellipse at 50% 30%, #2a1a05 0%, #0d0b06 70%);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(184,134,44,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(124,77,138,0.08) 0%, transparent 50%);
+  }
+
+  /* Mandala SVG rings */
+  .mandala-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(800px, 110vw);
+    opacity: 0.07;
+    animation: rotate-slow 120s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes rotate-slow {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  .hero-eyebrow {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(0.65rem, 1.5vw, 0.85rem);
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fade-up 1s ease 0.3s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--gold-light) 0%, #fff8e8 40%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fade-up 1s ease 0.5s forwards;
+  }
+
+  .hero-sub {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+    color: var(--lotus-light);
+    letter-spacing: 0.15em;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fade-up 1s ease 0.7s forwards;
+  }
+
+  .hero-desc {
+    max-width: 620px;
+    font-size: clamp(0.9rem, 2vw, 1.05rem);
+    line-height: 2;
+    color: rgba(245,240,232,0.75);
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: fade-up 1s ease 0.9s forwards;
+  }
+
+  .scroll-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    animation: fade-up 1s ease 1.2s forwards;
+    color: var(--gold);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+  }
+
+  .scroll-hint::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: pulse-line 2s ease infinite;
+  }
+
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0 2rem;
+    margin: 0 auto;
+    max-width: 900px;
+  }
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--gold), transparent);
+  }
+  .divider-glyph {
+    color: var(--gold);
+    font-size: 1.2rem;
+    opacity: 0.8;
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 6rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 1.5rem;
+    color: var(--parchment);
+  }
+
+  .section-title em {
+    font-style: normal;
+    color: var(--gold-light);
+  }
+
+  .section-body {
+    font-size: 1.02rem;
+    line-height: 2.1;
+    color: rgba(245,240,232,0.82);
+    max-width: 720px;
+  }
+
+  /* ── SCRIPTURE BLOCK ── */
+  .scripture {
+    margin: 3rem 0;
+    padding: 2.5rem 3rem;
+    background: rgba(184,134,44,0.06);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    position: relative;
+  }
+
+  .scripture::before {
+    content: '〝';
+    position: absolute;
+    top: -0.5rem;
+    left: 1.5rem;
+    font-size: 4rem;
+    color: var(--gold);
+    opacity: 0.2;
+    font-family: serif;
+    line-height: 1;
+  }
+
+  .scripture p {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.05rem;
+    line-height: 2.2;
+    color: rgba(245,240,232,0.9);
+  }
+
+  .scripture cite {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    color: var(--gold);
+    font-style: normal;
+    letter-spacing: 0.1em;
+  }
+
+  /* ── FAWA GRID ── */
+  .fawa-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 3rem;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(184,134,44,0.12);
+  }
+
+  @media (max-width: 700px) {
+    .fawa-grid { grid-template-columns: 1fr; }
+  }
+
+  .fawa-card {
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.4s ease;
+  }
+
+  .fawa-card:hover { transform: scale(1.01); z-index: 2; }
+
+  .fawa-card:nth-child(1) { background: linear-gradient(135deg, #1e2c1a, #162213); }
+  .fawa-card:nth-child(2) { background: linear-gradient(135deg, #1a1e2c, #121622); }
+  .fawa-card:nth-child(3) { background: linear-gradient(135deg, #2c1a1e, #221216); }
+  .fawa-card:nth-child(4) { background: linear-gradient(135deg, #1e1a2c, #161222); }
+
+  .fawa-letter {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+    opacity: 0.15;
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+  }
+
+  .fawa-card:nth-child(1) .fawa-letter { color: var(--jade); }
+  .fawa-card:nth-child(2) .fawa-letter { color: var(--lotus); }
+  .fawa-card:nth-child(3) .fawa-letter { color: var(--gold); }
+  .fawa-card:nth-child(4) .fawa-letter { color: var(--rust); }
+
+  .fawa-step {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    margin-bottom: 0.8rem;
+    font-family: 'Cinzel Decorative', serif;
+  }
+
+  .fawa-card:nth-child(1) .fawa-step { color: var(--jade-light); }
+  .fawa-card:nth-child(2) .fawa-step { color: var(--lotus-light); }
+  .fawa-card:nth-child(3) .fawa-step { color: var(--gold-light); }
+  .fawa-card:nth-child(4) .fawa-step { color: #e8a090; }
+
+  .fawa-korean {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--parchment);
+  }
+
+  .fawa-english {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 1.5rem;
+    opacity: 0.6;
+    text-transform: uppercase;
+  }
+
+  .fawa-desc {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: rgba(245,240,232,0.78);
+    margin-bottom: 1.5rem;
+  }
+
+  .fawa-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    padding: 0.2rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(245,240,232,0.7);
+  }
+
+  .fawa-card:nth-child(1) .tag { border-color: rgba(168,212,200,0.25); }
+  .fawa-card:nth-child(2) .tag { border-color: rgba(201,166,217,0.25); }
+  .fawa-card:nth-child(3) .tag { border-color: rgba(212,168,69,0.25); }
+  .fawa-card:nth-child(4) .tag { border-color: rgba(232,160,144,0.25); }
+
+  .fawa-neuro {
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.82rem;
+    color: rgba(245,240,232,0.5);
+    line-height: 1.8;
+  }
+
+  .neuro-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.4rem;
+    opacity: 0.6;
+  }
+
+  /* ── PATHWAY ── */
+  .pathway {
+    margin-top: 4rem;
+    position: relative;
+    padding: 3rem;
+    background: linear-gradient(135deg, rgba(184,134,44,0.06), rgba(124,77,138,0.06));
+    border: 1px solid rgba(184,134,44,0.15);
+    border-radius: 16px;
+  }
+
+  .pathway-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    color: var(--gold-light);
+    text-align: center;
+  }
+
+  .pathway-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+
+  .path-node {
+    text-align: center;
+    padding: 1.2rem 1.5rem;
+    min-width: 140px;
+  }
+
+  .path-node .cn {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .path-node .kr {
+    font-size: 0.8rem;
+    color: rgba(245,240,232,0.6);
+    margin-top: 0.3rem;
+  }
+
+  .path-arrow {
+    color: var(--gold);
+    font-size: 1.5rem;
+    opacity: 0.4;
+    padding: 0 0.5rem;
+  }
+
+  /* ── TABLE ── */
+  .mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2.5rem;
+    font-size: 0.92rem;
+  }
+
+  .mapping-table th {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(184,134,44,0.3);
+    text-align: left;
+    font-weight: 400;
+  }
+
+  .mapping-table td {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    line-height: 1.7;
+    color: rgba(245,240,232,0.82);
+    vertical-align: top;
+  }
+
+  .mapping-table tr:hover td {
+    background: rgba(184,134,44,0.04);
+  }
+
+  .mapping-table td:first-child {
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 600;
+    color: var(--gold-light);
+    white-space: nowrap;
+  }
+
+  /* ── PRACTICE GUIDE ── */
+  .practice-steps {
+    counter-reset: step;
+    list-style: none;
+    margin-top: 2.5rem;
+  }
+
+  .practice-steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 1.5rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .practice-steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.3;
+    line-height: 1;
+    text-align: right;
+  }
+
+  .step-content h4 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--parchment);
+    margin-bottom: 0.6rem;
+  }
+
+  .step-content p {
+    font-size: 0.93rem;
+    line-height: 1.9;
+    color: rgba(245,240,232,0.7);
+  }
+
+  /* ── AUTHOR ── */
+  .author-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(184,134,44,0.15);
+    border-radius: 12px;
+    padding: 2.5rem 3rem;
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-top: 3rem;
+  }
+
+  .author-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--lotus));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .author-info h4 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold-light);
+    margin-bottom: 0.3rem;
+  }
+
+  .author-info p {
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: rgba(245,240,232,0.65);
+  }
+
+  /* ── FULL-BLEED CALLOUT ── */
+  .callout-band {
+    padding: 5rem 2rem;
+    text-align: center;
+    background: linear-gradient(180deg, #0d0b06 0%, #1a1005 50%, #0d0b06 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .callout-band::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(184,134,44,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .callout-band blockquote {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(1.2rem, 3vw, 1.9rem);
+    font-weight: 300;
+    line-height: 2;
+    max-width: 700px;
+    margin: 0 auto 1.5rem;
+    color: rgba(245,240,232,0.9);
+  }
+
+  .callout-band blockquote strong {
+    color: var(--gold-light);
+    font-weight: 600;
+  }
+
+  .callout-band cite {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    font-style: normal;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 3rem 2rem;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.8rem;
+    color: rgba(245,240,232,0.35);
+    line-height: 2;
+  }
+
+  footer a { color: var(--gold); text-decoration: none; opacity: 0.7; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 48px; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.2rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(13,11,6,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(184,134,44,0.1);
+  }
+
+  .nav-logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.9rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: rgba(245,240,232,0.6);
+    text-decoration: none;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    transition: color 0.3s;
+  }
+
+  .nav-links a:hover { color: var(--gold); }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    .author-card { flex-direction: column; }
+    .fawa-card { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- BACK BAR -->
+<nav class="back-bar">
+  <a href="leisure_classics_lecture_2026.html" class="back-btn"><span>←</span> 메인으로</a>
+  <div class="back-bar-title">능엄경 속의 이근원통 · FAWA 선명상</div>
+  <div class="back-bar-pair">
+    <a href="iching_travel.html" class="pair-link">☰ 주역 속의 여행과 관광 →</a>
+  </div>
+</nav>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">FAWA</span>
+  <ul class="nav-links">
+    <li><a href="#igeun">이근원통</a></li>
+    <li><a href="#fawa">FAWA 4단계</a></li>
+    <li><a href="#neuro">신경과학</a></li>
+    <li><a href="#practice">수행 안내</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <!-- Mandala background -->
+  <svg class="mandala-bg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#b8862c" stroke-width="0.5">
+      <circle cx="200" cy="200" r="80"/>
+      <circle cx="200" cy="200" r="110"/>
+      <circle cx="200" cy="200" r="140"/>
+      <circle cx="200" cy="200" r="170"/>
+      <circle cx="200" cy="200" r="190"/>
+      <polygon points="200,30 370,305 30,305" stroke-width="0.4"/>
+      <polygon points="200,370 370,95 30,95" stroke-width="0.4"/>
+      <line x1="200" y1="10" x2="200" y2="390" stroke-width="0.3"/>
+      <line x1="10" y1="200" x2="390" y2="200" stroke-width="0.3"/>
+      <line x1="59" y1="59" x2="341" y2="341" stroke-width="0.3"/>
+      <line x1="341" y1="59" x2="59" y2="341" stroke-width="0.3"/>
+      <path d="M200,60 A140,140 0 0,1 340,200" stroke-width="0.4"/>
+      <path d="M340,200 A140,140 0 0,1 200,340" stroke-width="0.4"/>
+      <path d="M200,340 A140,140 0 0,1 60,200" stroke-width="0.4"/>
+      <path d="M60,200 A140,140 0 0,1 200,60" stroke-width="0.4"/>
+    </g>
+  </svg>
+
+  <p class="hero-eyebrow">능엄경 이근원통 · 현대적 구현</p>
+  <h1 class="hero-title">FAWA<br>선명상</h1>
+  <p class="hero-sub">Follow · Absorb · Watchful · Awareness</p>
+  <p class="hero-desc">
+    귀근(耳根)으로 소리를 돌이켜 듣는 자를 보라—<br>
+    관세음보살이 걸어간 이 길을 현대 수행자를 위해<br>
+    네 단계의 알고리즘으로 재구성한 선명상법입니다.
+  </p>
+  <div class="scroll-hint">SCROLL</div>
+</div>
+
+<!-- ====== 이근원통 섹션 ====== -->
+<section id="igeun">
+  <p class="section-label">Surangama Sutra · 수능엄경</p>
+  <h2 class="section-title">이근원통<em>(耳根圓通)</em><br>귀로 깨달음에 이르는 길</h2>
+  <p class="section-body">
+    능엄경(楞嚴經, Śūraṅgama Sūtra)은 부처님이 25가지 원통(圓通) 수행법을 설하면서,
+    그 가운데 <strong>이근원통(耳根圓通)</strong>이 가장 수승하다고 문수보살이 찬탄한 경전입니다.
+    '이근(耳根)'이란 귀의 감각 기관이며, '원통(圓通)'은 모든 방향에 걸림 없이 두루
+    통한다는 뜻—곧 <em>귀에 의지하여 완전한 깨달음에 이른다</em>는 의미입니다.
+  </p>
+
+  <div class="scripture">
+    <p>
+      처음에 듣는 성품 가운데서 성품의 흐름을 따라 들어가니,<br>
+      소리의 대상(聲塵)이 없어지고, 소리의 대상과 들어간 지혜가 이미 고요해지니,<br>
+      소리의 움직임과 조용한 두 모양은 전혀 생기지 않았습니다.<br>
+      이와 같이 점차 더해가서 듣는 것과 들어가는 것이 다 사라지니…<br>
+      생멸이 이미 사라지자 적멸(寂滅)이 현전(現前)하였습니다.
+    </p>
+    <cite>— 능엄경, 관세음보살 이근원통장(耳根圓通章)</cite>
+  </div>
+
+  <p class="section-body">
+    관세음보살(觀世音菩薩, Avalokiteśvara)은 세상의 소리를 관(觀)하는 자입니다.
+    그는 밖의 소리를 쫓지 않고 <em>'듣는 자를 돌이켜 의식'</em>하는 수행을 통해
+    소리와 침묵의 이분법을 넘어섰습니다. 이것이 이근원통의 핵심—
+    소리를 듣는 것이 아니라, <strong>듣는 주체를 관찰</strong>함으로써 분별이 사라지고
+    공존적 의식(Co-existence Awareness)이 열립니다.
+  </p>
+
+  <div class="pathway">
+    <p class="pathway-title">이근원통의 수행 흐름</p>
+    <div class="pathway-flow">
+      <div class="path-node">
+        <div class="cn">聞</div>
+        <div class="kr">들음 · 따라하기</div>
+      </div>
+      <div class="path-arrow">→</div>
+      <div class="path-node">
+        <div class="cn">思</div>
+        <div class="kr">몰입 · 사유</div>
+      </div>
+      <div class="path-arrow">→</div>
+      <div class="path-node">
+        <div class="cn">修</div>
+        <div class="kr">지켜보기 · 닦음</div>
+      </div>
+      <div class="path-arrow">→</div>
+      <div class="path-node">
+        <div class="cn">覺</div>
+        <div class="kr">알아차림 · 원통</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider" style="padding: 0 2rem;"><div class="divider-line"></div><div class="divider-glyph">❋</div><div class="divider-line"></div></div>
+
+<!-- ====== FAWA 4단계 섹션 ====== -->
+<section id="fawa">
+  <p class="section-label">FAWA Algorithm · 수행 알고리즘</p>
+  <h2 class="section-title"><a href="https://youtu.be/js-YKWSGa1Ih" target="_blank"> FAWA 선명상</a><br><em>심신쌍수(心身雙修)</em>의 네 단계</h2>
+  <p class="section-body">
+    강태원 수행연구가가 능엄경의 이근원통 원리를 현대인이 실천할 수 있도록
+    재구조화한 인지 훈련 프로토콜입니다. <strong>따(Follow) → 몰(Absorb) → 지(Watchful) → 알(Awareness)</strong>,
+    각 단계는 뇌의 특정 신경망을 활성화하고 심신의 통합을 단계적으로 이끌어냅니다.
+  </p>
+
+  <div class="fawa-grid">
+    <!-- 1단계 따 -->
+    <div class="fawa-card">
+      <div class="fawa-letter">F</div>
+      <div class="fawa-step">STEP 01 · FOLLOW</div>
+      <div class="fawa-korean">따라하기</div>
+      <div class="fawa-english">따 · 감각 수용의 문</div>
+      <div class="fawa-desc">
+        소리, 호흡, 신체 감각을 있는 그대로 따라가십시오.
+        판단하거나 분석하지 않고, 감각 데이터를 순수하게 수용합니다.
+        이근원통의 <em>聞(문)</em>에 해당하며, 귀와 몸의 문을 활짝 엽니다.
+        사대(地·水·火·風)의 미세한 신체 감각이 여과 없이 인식됩니다.
+      </div>
+      <div class="fawa-tags">
+        <span class="tag">사대 각성</span>
+        <span class="tag">聞(들음)</span>
+        <span class="tag">상향식 수용</span>
+        <span class="tag">체성감각 개방</span>
+      </div>
+      <div class="fawa-neuro">
+        <div class="neuro-label">신경과학적 기제</div>
+        일차 체성감각 피질(S1)·섬엽(Insula) 활성화 · 감각 정밀도(Precision Weighting) 향상 · 하향식 예측 억제 유보
+      </div>
+    </div>
+
+    <!-- 2단계 몰 -->
+    <div class="fawa-card">
+      <div class="fawa-letter">A</div>
+      <div class="fawa-step">STEP 02 · ABSORB</div>
+      <div class="fawa-korean">몰입하기</div>
+      <div class="fawa-english">몰 · 자아 경계의 용해</div>
+      <div class="fawa-desc">
+        감각의 흐름과 하나가 되어 흘러가십시오. '나'라는 인지적 저항을 내려놓고
+        소리와 호흡의 리듬 속으로 완전히 들어갑니다. 이근원통의 <em>思(사)</em>에 해당하며,
+        자아 내러티브가 잠시 쉬고 순수한 현존만 남습니다.
+        경전의 "소리의 대상이 없어지는" 상태가 시작됩니다.
+      </div>
+      <div class="fawa-tags">
+        <span class="tag">미려·녹로관</span>
+        <span class="tag">思(사유)</span>
+        <span class="tag">신경 동조</span>
+        <span class="tag">심폐 결합</span>
+      </div>
+      <div class="fawa-neuro">
+        <div class="neuro-label">신경과학적 기제</div>
+        기본 모드 네트워크(DMN) 감소 · 세일리언스 네트워크 활성화 · Alpha·Theta파 호흡 동기화
+      </div>
+    </div>
+
+    <!-- 3단계 지 -->
+    <div class="fawa-card">
+      <div class="fawa-letter">W</div>
+      <div class="fawa-step">STEP 03 · WATCHFUL</div>
+      <div class="fawa-korean">지켜보기</div>
+      <div class="fawa-english">지 · 목격자 의식의 출현</div>
+      <div class="fawa-desc">
+        몰입한 상태에서 한 발짝 물러나, 일어나고 사라지는 감각을 조용히 지켜보십시오.
+        이것이 이근원통의 핵심—<em>'듣는 자를 돌이켜 보는'</em> 메타인지적 관찰입니다.
+        "이 소리는 나의 것이다"라는 고정된 예측이 해체되고, 감각은 단순한
+        현상으로 재정의됩니다.
+      </div>
+      <div class="fawa-tags">
+        <span class="tag">옥침관 개방</span>
+        <span class="tag">修(닦음)</span>
+        <span class="tag">메타인지</span>
+        <span class="tag">탈동일시</span>
+      </div>
+      <div class="fawa-neuro">
+        <div class="neuro-label">신경과학적 기제</div>
+        배외측 전전두엽(dlPFC) 활성화 · 예측 모델 재정립(Reappraisal) · 옥침관 게이팅 시스템 재조정
+      </div>
+    </div>
+
+    <!-- 4단계 알 -->
+    <div class="fawa-card">
+      <div class="fawa-letter">A</div>
+      <div class="fawa-step">STEP 04 · AWARENESS</div>
+      <div class="fawa-korean">알아차리기</div>
+      <div class="fawa-english">알 · 공존감의 완성</div>
+      <div class="fawa-desc">
+        주체와 객체의 경계가 사라지고, 듣는 자와 소리가 하나임을 알아차립니다.
+        능엄경의 <em>"적멸이 현전한다"</em>는 경지—신경계 전체가 코히어런스 상태로
+        공명하며, '나'와 '세계'를 구분하는 예측 오류가 소멸합니다.
+        이것이 FAWA가 지향하는 공존감(Co-existence Awareness)입니다.
+      </div>
+      <div class="fawa-tags">
+        <span class="tag">니환궁 활성</span>
+        <span class="tag">覺(깨달음)</span>
+        <span class="tag">신경 공명</span>
+        <span class="tag">비이원적 인식</span>
+      </div>
+      <div class="fawa-neuro">
+        <div class="neuro-label">신경과학적 기제</div>
+        뇌-심장-장 축 동기화 · 예측 오류 붕괴(Prediction Error Collapse) · 전전두엽-시상 완전 결합
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALLOUT -->
+<div class="callout-band">
+  <blockquote>
+    듣는 틀을 되돌려라.<br>
+    듣는 성품 돌이켜서 <strong>제 성품을 듣는다면</strong><br>
+    제 성품으로 더없이 높은 도를 이루리라.
+  </blockquote>
+  <cite>— 능엄경, 문수보살 게송 (아난에게)</cite>
+</div>
+
+<!-- ====== 신경과학 대응 섹션 ====== -->
+<section id="neuro">
+  <p class="section-label">Neuroscience · 과학적 근거</p>
+  <h2 class="section-title">심신쌍수 로드맵과<br><em>신경생리학적</em> 대응</h2>
+  <p class="section-body">
+    FAWA 각 단계는 전통 선수행의 에너지 통로 개념과 현대 신경과학의 연구 성과가
+    정확히 대응합니다. 파편화된 신경계를 하나의 조화로운 시스템으로 복구하는
+    과학적 여정이기도 합니다.
+  </p>
+
+  <table class="mapping-table">
+    <thead>
+      <tr>
+        <th>FAWA 단계</th>
+        <th>이근원통 대응</th>
+        <th>심신쌍수 로드맵</th>
+        <th>핵심 신경생리 기제</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>따(Follow)</td>
+        <td>聞 · 소리를 따름</td>
+        <td>사대 각성</td>
+        <td>감각 정밀도(Precision) 향상, S1·섬엽 활성화, 상향식(Bottom-up) 입력 강화</td>
+      </tr>
+      <tr>
+        <td>몰(Absorb)</td>
+        <td>思 · 소리와 하나됨</td>
+        <td>미려·녹로관 통과</td>
+        <td>DMN 활동 감소, Alpha·Theta 신경 동조, 심폐 결합(Cardiorespiratory Coupling)</td>
+      </tr>
+      <tr>
+        <td>지(Watchful)</td>
+        <td>修 · 듣는 자를 봄</td>
+        <td>옥침관 개방</td>
+        <td>dlPFC 메타인지 활성화, 하향식 예측 모델 재정립, 탈동일시(Reappraisal)</td>
+      </tr>
+      <tr>
+        <td>알(Awareness)</td>
+        <td>覺 · 적멸 현전</td>
+        <td>니환궁 활성</td>
+        <td>신경 공명(Neural Resonance), 예측 오류 붕괴, 뇌-심장-장 축 코히어런스</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="scripture" style="margin-top: 3rem;">
+    <p>
+      결국 FAWA 수행 알고리즘은 파편화된 인간의 신경계를 하나의 조화로운 시스템으로
+      복구하는 과정입니다. '따'와 '몰'을 통해 신체적 기반을 닦고(身),
+      '지'와 '알'을 통해 정신적 통찰을 완성함으로써(心), 우리는 고립된 자아의 감옥에서
+      벗어나 모든 생태계와 함께 공명하는 "공생적 존재"로 거듭나게 됩니다.
+    </p>
+    <cite>— 강태원, 「FAWA 선명상 수행의 단계별 신경생리학적 메커니즘 분석」</cite>
+  </div>
+</section>
+
+<div class="divider" style="padding: 0 2rem;"><div class="divider-line"></div><div class="divider-glyph">✦</div><div class="divider-line"></div></div>
+
+<!-- ====== 수행 안내 섹션 ====== -->
+<section id="practice">
+  <p class="section-label">Practice Guide · 수행 안내</p>
+  <h2 class="section-title">FAWA 선명상<br><em>실천 방법</em></h2>
+  <p class="section-body">
+    조용한 공간에서 편안한 자세로 앉습니다. 눈을 가볍게 감고, 아래 흐름을 따라
+    자연스럽게 수행하십시오. 억지로 경지를 만들려 하지 않고, 각 단계가 저절로
+    다음 단계로 이어지도록 허용합니다.
+  </p>
+
+  <ol class="practice-steps">
+    <li>
+      <div class="step-content">
+        <h4>몸 자리 잡기 — 준비</h4>
+        <p>척추를 자연스럽게 세우고, 양 손은 무릎 위에 놓습니다. 
+        눈을 가볍게 감거나 반쯤 뜬 채로 아래를 향합니다. 
+        세 번 깊은 호흡으로 몸과 마음의 긴장을 내려놓습니다.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-content">
+        <h4>따(Follow) — 소리와 감각을 따라가기</h4>
+        <p>주변에서 들리는 소리들을 있는 그대로 받아들입니다. 
+        좋고 나쁨을 판단하지 않습니다. 동시에 호흡의 감촉, 
+        공기의 온도, 몸의 무게감 등 신체 감각을 섬세하게 느낍니다.
+        관세음보살이 세상의 소리를 처음 맞아들이듯.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-content">
+        <h4>몰(Absorb) — 소리 속으로 들어가기</h4>
+        <p>소리와 호흡의 리듬이 나를 담고 있다고 느껴질 때, 
+        그 안으로 완전히 들어갑니다. '내가 듣는다'는 생각을 잠시 내려놓고, 
+        소리와 나 사이의 경계가 흐려지도록 허용합니다.
+        경전이 말하는 "소리의 대상이 없어지는" 지점입니다.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-content">
+        <h4>지(Watchful) — 듣는 자를 지켜보기</h4>
+        <p>이것이 이근원통의 핵심 수행입니다. 소리를 듣는 대신, 
+        <em>지금 듣고 있는 이 의식</em>을 조용히 바라봅니다. 
+        감각이 일어나고 사라지는 것을 목격하되, 
+        그것에 휩쓸리지 않습니다. 관세음보살처럼 세상을 관(觀)합니다.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-content">
+        <h4>알(Awareness) — 알아차림 속에 머물기</h4>
+        <p>지켜보는 자와 지켜보는 대상이 하나라는 것을 자연스럽게 알아차립니다. 
+        특별한 체험을 만들려 하지 않고, 지금 이 순간의 완전한 현존 속에 
+        고요히 머뭅니다. 능엄경의 "적멸(寂滅)이 현전(現前)"하는 경지입니다.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-content">
+        <h4>마무리 — 일상으로 돌아오기</h4>
+        <p>천천히 눈을 뜨고, 손발을 가볍게 움직입니다. 
+        수행 중 경험한 고요함을 일상으로 가져가십시오. 
+        FAWA는 좌선 중에만이 아니라 걷기, 대화, 모든 일상 속에서도 
+        실천할 수 있는 살아있는 수행법입니다.</p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="author-card">
+    <div class="author-icon">🪷</div>
+    <div class="author-info">
+      <h4>강태원 (Neuro-Contemplative Researcher)</h4>
+      <p>
+        선명상의 전통적 심신쌍수(心身雙修) 원리와 현대 신경과학의 예측 처리 이론(Predictive Processing)을
+        통합하여 FAWA 수행 알고리즘을 체계화하였습니다. 능엄경 이근원통의 핵심을
+        현대인이 실천 가능한 인지 훈련 프로토콜로 구조화한 연구자입니다.
+        주요 참조: Becattini et al. (2026), Lutz et al. (2019), McCraty et al. (2009).
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>FAWA 선명상 · 이근원통의 현대적 구현</p>
+  <p style="margin-top: 0.5rem;">
+    출처: 강태원, 「FAWA 선명상 수행의 단계별 신경생리학적 메커니즘 분석」<br>
+    능엄경(楞嚴經, Śūraṅgama Sūtra) · 이근원통장(耳根圓通章)
+  </p>
+  <p style="margin-top: 1rem; opacity: 0.5;">
+    이 자료는 K-MediWell 힐링투어리즘 연구 자료로 활용됩니다.
+  </p>
+</footer>
+
+</body>
+</html>
